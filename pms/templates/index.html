@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Password Manager Dashboard</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+
+  <script defer>
+    function toggleMenu() {
+      document.getElementById("mobile-menu").classList.toggle("hidden");
+    }
+  </script>
+</head>
+<body class="bg-gray-100">
+
+  <!-- Navbar -->
+  <nav class="bg-purple-800 p-4 flex justify-between items-center text-white">
+    <div class="flex items-center space-x-2">
+      <svg class="w-8 h-8 text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.121 17.804A9 9 0 0112 15a9 9 0 016.879 2.804M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+      </svg>
+      <span class="font-bold text-xl">Lock-Mitra</span>
+    </div>
+    <div class="flex items-center space-x-4" >
+      {% if profile_photo_url %}
+      <!-- If profile photo exists, display it -->
+       <div style="z-index: 1000;">
+         <img src="{{ profile_photo_url }}" alt="Profile Photo" class="w-8 h-8 rounded-full">
+       </div>
+      {% else %}
+      <div class="person" onclick="AddPerson()">
+            <!-- If no profile photo, show default person icon -->
+            <i class="material-icons" id="personButton">person</i>
+          </div>
+        {% endif %}
+      <span>
+        {% if user.last_name == 'None' %}
+          {{ user.first_name }}
+        {% else %}
+          {{ user.get_full_name }}
+        {% endif %}
+      </span>
+      <div class="logout" onclick="LogoutPage()">
+        <i class="material-icons" id="logoutButton">logout</i>
+      </div>
+      <button class="md:hidden" onclick="toggleMenu()">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+        </svg>
+      </button>
+    </div>
+  </nav>
+
+    <!-- Photo Capture Modal -->
+  <div class="fixed z-10 inset-0 overflow-y-auto hidden" id="photoModal">
+    <div class="flex items-center justify-center min-h-screen bg-gray-500 bg-opacity-75 px-4">
+      <div class="bg-white rounded-lg overflow-hidden shadow-xl transform transition-all max-w-lg w-full p-6">
+        <div class="flex justify-between items-center">
+          <h3 class="text-lg leading-6 font-medium text-gray-900">Add Profile Photo</h3>
+          <button class="text-gray-400 hover:text-gray-600" id="closeModal">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Option to take a photo or upload from gallery -->
+        <div class="mt-4">
+          <label class="block text-gray-700">Choose Photo Option</label>
+          <div class="flex space-x-4 mt-2">
+            <button class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-full" id="openCamera">
+              Use Camera
+            </button>
+            <button class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-full" id="chooseFromGallery">
+              Choose from Gallery
+            </button>
+          </div>
+        </div>
+
+        <!-- Camera preview and capture -->
+        <div class="mt-4 hidden" id="cameraSection">
+          <video id="cameraPreview" class="w-full rounded-lg border border-gray-300"></video>
+          <canvas id="canvas" class="hidden"></canvas>
+          <div class="mt-4 flex justify-center">
+            <button class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-full" id="capturePhoto">
+              Capture Photo
+            </button>
+          </div>
+        </div>
+
+        <!-- File input for gallery upload -->
+        <div class="mt-4 hidden" id="gallerySection">
+          <input type="file" accept="image/*" id="photoUpload" class="w-full border border-gray-300 rounded-lg py-2 px-4 focus:outline-none">
+        </div>
+
+        <!-- Display captured/uploaded photo -->
+        <div class="mt-4 hidden" id="photoPreviewContainer">
+          <h4 class="text-center text-gray-700">Selected Photo:</h4>
+          <img id="photoPreview" class="w-full rounded-lg border border-gray-300">
+        </div>
+
+        <!-- Save button -->
+        <div class="mt-4 flex justify-end space-x-4 hidden" id="saveContainer">
+          <button class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-full" id="savePhoto">
+            Save Photo
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+    
+  <!-- Mobile Menu -->
+  <div id="mobile-menu" class="hidden bg-purple-800 text-white p-4 md:hidden">
+    <a href="#" class="block py-2 hover:bg-purple-700">Dashboard</a>
+    <a href="#" class="block py-2 hover:bg-purple-700">Password</a>
+    <a href="#" class="block py-2 hover:bg-purple-700">Accounts</a>
+    <a href="#" class="block py-2 hover:bg-purple-700">Activity</a>
+    <a href="#" class="block py-2 hover:bg-purple-700">Messages</a>
+  </div>
+
+  <!-- Main Content -->
+  <div class="pr-8 pl-8 pb-4 pt-8 flex flex-col md:flex-row space-y-8 md:space-y-0 md:space-x-8" style="height: 400px;">
+    <!-- Welcome Card -->
+    <div class="md:w-2/3 bg-white p-2 rounded-lg shadow-md">
+      <div class="flex items-center space-x-4">
+        <div class="bg-purple-100 p-4 mt-4 ml-4 rounded-full">
+          <img src="../static/images/privacy.png" alt="">
+        </div>
+        <div>
+          <h2 class="text-7xl font-bold text-gray-700 ml-4">Hi <span class="text-7xl font-bold text-gray-700 ml-4">
+            {% if user.last_name == 'None' %}
+              {{ user.first_name }}
+            {% else %}
+              {{ user.get_full_name }}
+            {% endif %}
+          </span></h2>
+          <p class="text-xl mt-4 ml-4">Welcome to your password manager. Here, you can set unique passwords from different websites, notes, and profiles for your online shopping. We'll help you maintain all passwords and save your time.</p>
+          <div class="mt-6 ml-4 flex space-x-4">
+            <button class="bg-purple-600 text-white px-4 py-2 rounded-md">Take Short Tour</button>
+            <button class="bg-teal-400 text-white px-4 py-2 rounded-md">Premium Plans</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Password Health Card -->
+    <div class="md:w-1/3 bg-purple-700 text-white p-4 rounded-xl shadow-md">
+      <h3 class="text-lg font-bold mb-4">Password Health</h3>
+      <div class="grid grid-cols-2 gap-4">
+        <!-- Secure Password -->
+        <div class="bg-teal-400 p-2 rounded-lg">
+          <span class="block text-4xl font-bold text-white">137</span>
+          <span class="block text-sm mt-1 text-white">Secure Password</span>
+        </div>
+        <!-- Compromised Password -->
+        <div class="bg-white p-2 rounded-lg">
+          <span class="block text-4xl font-bold text-red-400">42</span>
+          <span class="block text-sm mt-1 text-gray-500">Compromised</span>
+        </div>
+        <!-- Reused Password -->
+        <div class="bg-white p-2 rounded-lg">
+          <span class="block text-4xl font-bold text-red-400">84</span>
+          <span class="block text-sm mt-1 text-gray-500">Reused Password</span>
+        </div>
+        <!-- Weak Password -->
+        <div class="bg-white p-2 rounded-lg">
+          <span class="block text-4xl font-bold text-red-400">29</span>
+          <span class="block text-sm mt-1 text-gray-500">Weak Password</span>
+        </div>
+      </div>
+    
+      <!-- Score Health -->
+      <div class="mt-6">
+        <span class="block text-sm text-white">Score Health</span>
+        <div class="w-full bg-teal-500 h-3 rounded-full mt-2">
+          <div class="bg-purple-200 h-3 rounded-full" style="width: 80%;"></div>
+        </div>
+        <span class="block text-right text-sm text-white mt-2">80%</span>
+      </div>
+    </div>
+    
+  </div>
+  <div class="pr-8 pl-8 pb-4 pt-4">
+    <!-- Saved Passwords Section -->
+    <div class="bg-white p-6 rounded-lg shadow-md">
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-2xl font-bold text-gray-700">Saved Password (292)</h2>
+        <div class="flex items-center space-x-4">
+          <div class="relative">
+            <input
+              type="text"
+              placeholder="Search Anything..."
+              class="border border-gray-300 rounded-full py-2 pl-10 pr-4 focus:outline-none focus:ring-2 focus:ring-purple-600"
+            />
+            <svg
+              class="w-6 h-6 text-gray-400 absolute top-2 left-2"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M8 14l6-6M8 8h8v8"
+              ></path>
+            </svg>
+          </div>
+          <button
+            class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-full flex items-center"
+            id="openModal"
+          >
+            <svg
+              class="w-5 h-5 text-white mr-2"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M12 4v16m8-8H4"
+              />
+            </svg>
+            New Password
+          </button>
+        </div>
+      </div>
+     <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+      {% for password in user_passwords %}
+      <!-- Individual Card -->
+        <div class="bg-purple-100 pt-1 pr-2 pl-2 pb-1 rounded-lg border border-purple-800 shadow hover:shadow-lg transition-shadow flex items-center justify-between" style="height: 130px;">
+            <div class="flex items-center w-90 h-10">
+              <!-- Avatar Circle (Initial of Site Name) -->
+                <div class="bg-purple-600 w-20 h-20 rounded-2xl ml-4 flex items-center justify-center text-white text-6xl font-bold">
+                  {{ password.site_name|first|upper }}
+                  </div>
+                    <div class="ml-4">
+                      <!-- Website Name and Email -->
+                      <h3 class="text-lg font-bold text-purple-700">{{ password.site_name }}</h3>
+                      <p class="text-gray-600 text-m">{{ password.email }}</p>
+                      <p class="text-gray-600 text-m">{{ password.username }}</p>
+
+                        <div class="flex items-center">
+                          <!-- Password Text (Hidden initially) -->
+                          <span id="password-{{ password.id }}" class="text-gray-600 text-m">********</span>
+                          <!-- Eye Button to Toggle Visibility -->
+                          <button id="toggle-password-{{ password.id }}" class="ml-2 focus:outline-none" onclick="togglePassword({{ password.id }})">
+                            <svg class="w-5 h-5 text-purple-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12c0 1.657-1.343 3-3 3S9 13.657 9 12s1.343-3 3-3 3 1.343 3 3zM2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-.1.33-.213.655-.334.977M2.124 16.28a8.12 8.12 0 00.333.977C3.732 16.057 7.523 19 12 19c4.478 0 8.268-2.943 9.542-7-.1-.33-.213-.655-.334-.977M2.124 7.72A8.12 8.12 0 012.457 12" />
+                            </svg>
+                          </button>
+                        </div>
+                    </div>
+                  </div>
+                <div class="text-right text-sm text-purple-600 h-28" style=" display: flex; flex-direction: column; justify-content: space-evenly;">
+                  <div class="btn-floating btn-small waves-effect waves-light blue " id="smallButton" onclick="ClickPlus()" style="display: flex; gap: 5px;  justify-content: flex-end;">
+                    <i class="material-icons" id="editButton">edit</i>
+                    <i class="material-icons" id="deleteButton">delete</i>
+                </div>
+              {{ password.created_at|date:"H:i" }} <br />
+              {{ password.created_at|date:"d/m/Y" }}
+            </div>
+        </div>
+      {% endfor %}
+    </div> 
+    </div>
+    
+  </div>
+  
+  <!-- Modal -->
+  <div class="fixed z-10 inset-0 overflow-y-auto hidden" id="passwordModal">
+    <div class="flex items-center justify-center min-h-screen bg-gray-500 bg-opacity-75 px-4">
+      <div class="bg-white rounded-lg overflow-hidden shadow-xl transform transition-all max-w-lg w-full p-6">
+        <div class="flex justify-between items-center">
+          <h3 class="text-lg leading-6 font-medium text-gray-900">Add New Password</h3>
+          <button class="text-gray-400 hover:text-gray-600" id="closeModal">
+            <svg
+              class="w-6 h-6"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M6 18L18 6M6 6l12 12"
+              />
+            </svg>
+          </button>
+        </div>
+  
+          <div class="mt-4">
+            <!-- Site Name field -->
+            <form id="passwordForm" method="post" action="{% url 'save_password' %}">
+              {% csrf_token %}
+              <label class="block text-gray-700">Site Name</label>
+              <input
+                type="text"
+                class="w-full border border-gray-300 rounded-lg py-2 px-4 focus:outline-none focus:ring-2 focus:ring-purple-600"
+                placeholder="Enter site name"
+                name="site_name"
+                required
+              />
+              
+
+              <label class="block text-gray-700 mt-4">Username</label>
+              <input
+                type="text"
+                class="w-full border border-gray-300 rounded-lg py-2 px-4 focus:outline-none focus:ring-2 focus:ring-purple-600"
+                placeholder="Enter Username"
+                name="Username"
+                required
+              />
+
+
+              <!-- Email field -->
+              <label class="block text-gray-700 mt-4">Email</label>
+              <input
+                type="email"
+                class="w-full border border-gray-300 rounded-lg py-2 px-4 focus:outline-none focus:ring-2 focus:ring-purple-600"
+                placeholder="Enter email"
+                name="email"
+                required
+              />
+    
+              <!-- Password field -->
+              <label class="block text-gray-700 mt-4">Password</label>
+              <input
+                type="password"
+                class="w-full border border-gray-300 rounded-lg py-2 px-4 focus:outline-none focus:ring-2 focus:ring-purple-600"
+                placeholder="Enter password"
+                name="password"
+                required
+              />
+    
+              <div class="mt-4 flex justify-end space-x-4">
+                <!-- Generate Button -->
+                <button
+                  class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-full"
+                  id="generatePassword"
+                  type="button"
+                >
+                  Generate
+                </button>
+    
+                <!-- Save Button -->
+                <button
+                  class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-full"
+                  id="saveButton"
+                  type="submit"
+                >
+                  Save
+                </button>
+              </div>
+            </form>
+          </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Password Cards -->
+  
+  
+
+
+  <!-- Account Security Section -->
+  <div class="pr-8 pl-8 pb-4 pt-4">
+    <div class="flex space-x-4">
+        <!-- Saved Passwords Card -->
+        <div class="bg-purple-500 text-white p-6 rounded-lg shadow-md flex-1 flex items-center justify-between">
+            <div>
+                <div class="bg-purple-700 p-2 rounded-full inline-block">
+                    <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 11V7m0 0V5a2 2 0 10-4 0v2m4 0v4m0-4v4m-4 0v2m0-6h2m0 0h2m0 4v2m-2 4a2 2 0 114-0m0 0a2 2 0 110-4m-4 0h2m0 0h-2m4 4h2a2 2 0 00-4 0v2"></path>
+                    </svg>
+                </div>
+                <h3 class="text-4xl font-bold mt-4">292</h3>
+                <p class="text-lg mt-2">Saved Passwords</p>
+            </div>
+            <button class="bg-teal-400 text-white px-4 py-2 rounded-full">Read More</button>
+        </div>
+
+        <!-- Saved Biometrics Card -->
+        <div class="bg-purple-500 text-white p-6 rounded-lg shadow-md flex-1 flex items-center justify-between">
+            <div>
+                <div class="bg-purple-700 p-2 rounded-full inline-block">
+                    <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 11V7m0 0V5a2 2 0 10-4 0v2m4 0v4m0-4v4m-4 0v2m0-6h2m0 0h2m0 4v2m-2 4a2 2 0 114-0m0 0a2 2 0 110-4m-4 0h2m0 0h-2m4 4h2a2 2 0 00-4 0v2"></path>
+                    </svg>
+                </div>
+                <h3 class="text-4xl font-bold mt-4">37</h3>
+                <p class="text-lg mt-2">Saved Biometrics</p>
+            </div>
+            <button class="bg-teal-400 text-white px-4 py-2 rounded-full">Read More</button>
+        </div>
+
+        <!-- Generate New Password Card -->
+        <div class="bg-gray-100 text-gray-700 p-4 rounded-lg shadow-md w-full flex items-center justify-between space-x-2" style="width: 900px;">
+          <!-- Left Column -->
+
+          
+          <div class="flex-1 space-y-2">
+            <h3 class="text-lg font-bold">Generate New Password</h3>
+              <!-- URL Input -->
+              <div class="flex items-center bg-white p-2 rounded-lg">
+                  <input type="text" placeholder="www.website2.com" class="bg-transparent text-sm flex-1 focus:outline-none">
+              </div>
+      
+              <!-- Email Input -->
+              <div class="flex items-center bg-white p-2 rounded-lg">
+                  <input type="email" placeholder="smithjames@mail.com" class="bg-transparent text-sm flex-1 focus:outline-none">
+              </div>
+      
+              <!-- Include Numbers Toggle -->
+              <div class="flex items-center bg-purple-100 p-2 rounded-lg">
+                  <span class="text-sm flex-1">Include Numbers</span>
+                  <input type="checkbox" checked class="hidden">
+                  <div class="relative w-12 h-6 bg-purple-500 rounded-full">
+                      <div class="w-6 h-6 bg-white rounded-full absolute right-0 transform transition-transform duration-300"></div>
+                  </div>
+              </div>
+          </div>
+      
+          <!-- Right Column -->
+          <div class="flex-1 space-y-2">
+              <!-- Password Length Input -->
+              <div class="flex items-center bg-white p-2 rounded-lg space-x-2">
+                  <input type="number" value="10" min="1" class="bg-transparent text-sm w-10 text-center focus:outline-none">
+                  <input type="text" value="YtEb4ZnV6K" class="bg-transparent text-sm flex-1 focus:outline-none">
+                  <button class="text-purple-500">
+                      <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                      </svg>
+                  </button>
+              </div>
+      
+              <!-- Include Letters Toggle -->
+              <div class="flex items-center bg-purple-100 p-2 rounded-lg">
+                <span class="text-sm flex-1">Include Letters</span>
+                <!-- Change ID to class for multiple items -->
+                <input type="checkbox" class="toggle-checkbox hidden">
+                <!-- Switch -->
+                <label class="relative w-12 h-6 bg-purple-500 rounded-full cursor-pointer">
+                  <div class="dot absolute w-6 h-6 bg-white rounded-full transition-transform transform duration-300"></div>
+                </label>
+              </div>
+              
+              <!-- Include Symbols Toggle -->
+              <div class="flex items-center bg-purple-700 text-white p-2 rounded-lg">
+                <span class="text-sm flex-1">Include Symbols</span>
+                <input type="checkbox" class="toggle-checkbox hidden">
+                <label class="relative w-12 h-6 bg-purple-500 rounded-full cursor-pointer">
+                  <div class="dot absolute w-6 h-6 bg-white rounded-full transition-transform transform duration-300"></div>
+                </label>
+              </div>
+              
+              <script>
+                // Select all elements with the class 'toggle-checkbox'
+                const checkboxes = document.querySelectorAll('.toggle-checkbox');
+              
+                checkboxes.forEach((checkbox) => {
+                  // Find the label that follows the checkbox and its dot
+                  const label = checkbox.nextElementSibling;
+                  const dot = label.querySelector('.dot');
+              
+                  checkbox.addEventListener('change', function() {
+                    if (checkbox.checked) {
+                      dot.style.transform = 'translateX(100%)'; // Move the dot to the right
+                    } else {
+                      dot.style.transform = 'translateX(0)'; // Move the dot back to the left
+                    }
+                  });
+                });
+              </script>
+              
+          <!-- Arrow Button -->
+          
+      </div>
+      
+    </div>
+  </div>
+
+  
+
+        <script>
+            function togglePassword(id, actualPassword) {
+                const passwordElement = document.getElementById(`password-${id}`);
+                const togglePasswordButton = document.getElementById(`toggle-password-${id}`);
+                
+                if (passwordElement.textContent === "********") {
+                    passwordElement.textContent = actualPassword;
+                } else {
+                    passwordElement.textContent = "********";
+                }
+            }
+        </script>
+       ]<script>
+          // Get modal elements
+          const modal = document.getElementById("passwordModal");
+          const openModalBtn = document.getElementById("openModal");
+          const closeModalBtn = document.getElementById("closeModal");
+          const saveButton = document.querySelector('button[type="submit"]');
+        
+          // Open the modal
+          openModalBtn.addEventListener("click", () => {
+            modal.classList.remove("hidden");
+          });
+        
+          // Close the modal
+          closeModalBtn.addEventListener("click", () => {
+            modal.classList.add("hidden");
+          });
+        
+        
+
+          // Close the modal when clicking outside of the modal content
+          window.addEventListener("click", (e) => {
+            if (e.target === modal) {
+              modal.classList.add("hidden");
+            }
+          });
+        
+          // Handle form submission
+          {% comment %} saveButton.addEventListener('click', (e) => {
+            e.preventDefault();
+            
+            // Collect form data
+            const form = document.getElementById('passwordForm');
+            const formData = new FormData(form);
+            const csrfToken = formData.get('csrfmiddlewaretoken');
+        
+            fetch('/save-password/', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
+              },
+              body: JSON.stringify({
+                site_name: formData.get('siteName'),
+                email: formData.get('email'),
+                password: formData.get('password'),
+              })
+            })
+            .then(response => response.json())
+            .then(data => {
+              if (data.message) {
+                alert(data.message); // Show success message
+                modal.classList.add("hidden");  // Hide the modal after saving
+                form.reset(); // Optionally reset the form fields here
+              } else if (data.error) {
+                alert(data.error); // Show error message
+              }
+            })
+            .catch(error => console.error('Error:', error));
+          });  {% endcomment %}
+
+          function LogoutPage(){
+            window.location.href = "LogoutUser";
+          }
+        </script> 
+        
+        <script>
+          document.getElementById('openCamera').addEventListener('click', function() {
+          document.getElementById('cameraSection').classList.remove('hidden');
+          document.getElementById('gallerySection').classList.add('hidden');
+          startCamera();  // Function to start the camera (already provided earlier)
+        });
+
+        document.getElementById('chooseFromGallery').addEventListener('click', function() {
+          document.getElementById('gallerySection').classList.remove('hidden');
+          document.getElementById('cameraSection').classList.add('hidden');
+          document.getElementById('photoPreviewContainer').classList.add('hidden');
+        });
+
+        document.getElementById('photoUpload').addEventListener('change', function(event) {
+          const file = event.target.files[0];
+          const reader = new FileReader();
+          reader.onload = function(e) {
+            document.getElementById('photoPreview').src = e.target.result;
+            document.getElementById('photoPreviewContainer').classList.remove('hidden');
+            document.getElementById('saveContainer').classList.remove('hidden');
+          };
+          reader.readAsDataURL(file);
+        });
+
+          document.getElementById("personButton").addEventListener("click", function() {
+          const modal = document.getElementById("photoModal");
+          modal.classList.remove("hidden");
+          startCamera();
+        });
+
+        document.getElementById("closeModal").addEventListener("click", function() {
+          const modal = document.getElementById("photoModal");
+          modal.classList.add("hidden");
+          stopCamera();
+        });
+
+        const video = document.getElementById("cameraPreview");
+        const canvas = document.getElementById("canvas");
+        const photoPreview = document.getElementById("photoPreview");
+        const photoPreviewContainer = document.getElementById("photoPreviewContainer");
+        const saveContainer = document.getElementById("saveContainer");
+
+        function startCamera() {
+          navigator.mediaDevices.getUserMedia({ video: true })
+            .then(stream => {
+              video.srcObject = stream;
+              video.play();
+            })
+            .catch(err => {
+              console.error("Error accessing camera: ", err);
+            });
+        }
+
+        function stopCamera() {
+          const stream = video.srcObject;
+          const tracks = stream.getTracks();
+
+          tracks.forEach(track => {
+            track.stop();
+          });
+
+          video.srcObject = null;
+        }
+
+        document.getElementById("capturePhoto").addEventListener("click", function() {
+          const context = canvas.getContext("2d");
+          canvas.width = video.videoWidth;
+          canvas.height = video.videoHeight;
+          context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+          const dataUrl = canvas.toDataURL("image/png");
+          photoPreview.src = dataUrl;
+          photoPreviewContainer.classList.remove("hidden");
+          saveContainer.classList.remove("hidden");
+        });
+
+        document.getElementById("savePhoto").addEventListener("click", function() {
+          const dataUrl = canvas.toDataURL("image/png");
+
+          // Send the captured image to the server via AJAX or use a form submission
+          const formData = new FormData();
+          formData.append('photo', dataUrl);
+
+          fetch("{% url 'save_photo' %}", {
+            method: "POST",
+            body: formData,
+            headers: {
+              'X-CSRFToken': '{{ csrf_token }}'
+            }
+          })
+          .then(response => response.json())
+          .then(data => {
+            console.log("Photo saved successfully", data);
+            // Optionally close the modal here
+          })
+          .catch(error => {
+            console.error("Error saving photo:", error);
+          });
+        });
+        </script>
+        
+</body>
+</html>

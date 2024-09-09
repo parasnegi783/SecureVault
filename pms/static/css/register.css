@@ -1,0 +1,141 @@
+* {
+    padding: 0;
+    margin: 0;
+    box-sizing: border-box;
+}
+body {
+    font-family: 'Arial', sans-serif;
+}
+.container {
+    width: 100%;
+    height: 100vh;
+    background: linear-gradient(45deg, rgb(135 129 255), rgb(255 110 110));
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.container .box {
+    width: 350px;
+    background-color: #fff;
+    padding: 40px 30px;
+    border-radius: 20px;
+    box-shadow: 0px 0px 15px rgba(0, 0, 0, 0.1);
+}
+h2 {
+    text-align: center;
+    font-size: 36px;
+    margin-bottom: 20px;
+    position: relative;
+}
+h2::before {
+    position: absolute;
+    content: '';
+    width: 50px;
+    height: 4px;
+    border-radius: 50px;
+    background: linear-gradient(45deg, #875cff, #ff66d7);
+    bottom: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+}
+.box .input_box {
+    width: 100%;
+    position: relative;
+    margin-bottom: 20px;
+}
+.box .input_box input {
+    width: 100%;
+    font-size: 18px;
+    padding: 10px;
+    outline: none;
+    border-width: 0px 0px 2px 0px;
+    border-color: #cd7acd;
+    transition: border-color 0.3s ease;
+}
+.box .input_box input:focus {
+    border-color: #875cff;
+}
+.box .input_box label {
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 18px;
+    color: #0000009e;
+    pointer-events: none;
+    transition: 0.2s ease;
+}
+.box .input_box input:focus + label,
+.box .input_box input:valid + label {
+    top: -10px;
+    font-size: 14px;
+    color: blue;
+}
+.box .input_box .password_checkbox {
+    display: flex;
+    align-items: center;
+    margin-top: 5px;
+}
+.box .input_box .password_checkbox input {
+    margin-right: 8px;
+}
+.box .signup_button {
+    width: 100%;
+    background: linear-gradient(45deg, #875cff, #ff66d7);
+    border: none;
+    padding: 12px 20px;
+    margin-top: 20px;
+    font-size: 22px;
+    color: #fff;
+    cursor: pointer;
+    border-radius: 30px;
+    transition: 0.2s ease;
+}
+.box .signup_button:hover {
+    background: linear-gradient(45deg, #7544d4, #e55a9d);
+}
+.box .signup_button:active {
+    transform: scale(0.95);
+}
+.box .login_link {
+    font-size: 16px;
+    text-align: center;
+    margin-top: 20px;
+}
+.box .login_link a {
+    color: #875cff;
+    text-decoration: none;
+}
+.box .login_link a:hover {
+    text-decoration: underline;
+}
+
+
+
+/* Styles for the password input with eye icon */
+.password_container {
+    position: relative;
+}
+
+.password_container input[type="password"], 
+.password_container input[type="text"] {
+    width: 100%;
+    font-size: 18px;
+    padding: 10px;
+    outline: none;
+    border-width: 0px 0px 2px 0px;
+    border-color: #cd7acd;
+    transition: border-color 0.3s ease;
+}
+
+.password_container i {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #6c6c6c;
+    font-size: 18px;
+    cursor: pointer;
+}
+
+/* Other CSS */
